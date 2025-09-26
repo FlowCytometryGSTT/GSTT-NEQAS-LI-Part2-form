@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEQAS Leukaemia Investigation - Part 2</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        input[type="text"], input[type="email"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: white;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus, input[type="email"]:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        input:disabled, select:disabled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        .required {
+            color: #e74c3c;
+        }
+        .submit-btn {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .submit-btn:hover:not(:disabled) {
+            background-color: #2980b9;
+        }
+        .submit-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .response-display {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        .email-options {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        .email-btn {
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+        .email-btn:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>NEQAS Leukaemia Investigation - Part 2</h1>
+        <form id="leukemiaForm">
+            <div class="form-group">
+                <label for="name">Name: <span class="required">*</span></label>
+                <input type="text" id="name" required placeholder="Enter your full name">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email: <span class="required">*</span></label>
+                <input type="email" id="email" required placeholder="Enter your email address">
+            </div>
+
+            <div class="form-group">
+                <label for="lineage">Lineage: <span class="required">*</span></label>
+                <select id="lineage" required>
+                    <option value="">- Select a Lineage -</option>
+                    <option value="myeloid">Myeloid proliferations and neoplasms</option>
+                    <option value="lymphoid_b">Lymphoid B-cell</option>
+                    <option value="lymphoid_t">Lymphoid T-cell</option>
+                    <option value="histiocytic">Histiocytic and Dendritic Cell Neoplasms</option>
+                    <option value="stroma">Stroma-derived neoplasms of lymphoid tissues</option>
+                    <option value="genetic">Genetic tumour syndromes associated with haemato-lymphoid tumours</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="differentiation">Differentiation: <span class="required">*</span></label>
+                <select id="differentiation" disabled required>
+                    <option value="">- Select a Differentiation -</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="diagnosis">Diagnosis: <span class="required">*</span></label>
+                <select id="diagnosis" disabled required>
+                    <option value="">- Select a Diagnosis -</option>
+                </select>
+            </div>
+
+            <button type="submit" class="submit-btn" disabled>Submit Diagnosis</button>
+        </form>
+        
+        <div id="responseDisplay" class="response-display" style="display: none;">
+            <h3>Submitted Diagnosis:</h3>
+            <p id="responseText"></p>
+            
+            <div class="email-options">
+                <h4>Email Options:</h4>
+                <p>Choose how you'd like to send this submission:</p>
+                <button id="mailtoBtn" class="email-btn">Send via Email Client</button>
+                <button id="serverEmailBtn" class="email-btn" style="display: none;">Send via Server</button>
+                <p id="serverEmailMessage" style="display: none; margin-top: 10px; color: #e74c3c;">
+                    Server email functionality requires backend implementation.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define the complete hierarchical data structure
+        const diagnosisData = {
+            myeloid: {
+                name: "Myeloid proliferations and neoplasms",
+                differentiations: {
+                    "Myeloid precursor lesions": [
+                        "Clonal haematopoiesis of indeterminate potential (CHIP)",
+                        "VEXAS syndrome",
+                        "Clonal cytopenia of undetermined significance",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Myeloproliferative neoplasms": [
+                        "Chronic myeloid leukaemia",
+                        "Chronic neutrophilic leukaemia",
+                        "Chronic eosinophilic lukaemia",
+                        "Polycythaemia vera",
+                        "Essential thrombocythaemia",
+                        "Primary myelofibrosis, prefibrotic",
+                        "Primary myelofibrosis, fibrotic",
+                        "Juvenile myelomonocytc leukaemia",
+                        "Myeloproliferative neoplasm NOS (unclassifiable)",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mastocytosis": [
+                        "Cutaneous mastocytosis",
+                        "Indolent systemic mastocytosis",
+                        "Bone marrow mastocytosis",
+                        "Smouldering systemic mastocytosis",
+                        "Aggressive systemic mastocytosis",
+                        "Systemic mastocytosis with an associated haematological neoplasm",
+                        "Mast cell leukaemia",
+                        "Mast cell sarcoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Myelodysplastic neoplasms (MDS) with defining genetic abnormalities": [
+                        "Myelodysplastic neoplasm with low blasts and 5q deletion",
+                        "Myelodysplastic neoplasm with low blasts and SF3B1 mutation",
+                        "Myelodysplastic neoplasm with biallelic TP53 inactivation",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Myelodysplastic neoplasms (MDS) defined morphologically": [
+                        "Myelodysplastic neoplasm with low blasts and single lineage dysplasia",
+                        "Myelodysplastic neoplasm with low blasts and multilineage dysplasia",
+                        "Myelodysplastic neoplasm, hypoplastic",
+                        "Myelodysplastic neoplasm with increased blasts-I",
+                        "Myelodysplastic neoplasm with increased blasts-2",
+                        "Myelodysplastic neoplasm with increased blasts and fibrosis",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Myelodysplastic neoplasms (MDS) of childhood": [
+                        "Childhood myelodysplastic neoplasm with low blasts-NOS",
+                        "Childhood myelodysplastic neoplasm with low blasts, hypocellular",
+                        "Childhood myelodysplastic neoplasm with increased blasts",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Myelodysplastic/myeloproliferative neoplasms": [
+                        "Myelodysplastic chronic myelomonocytic leukaemia",
+                        "Myeloproliferative chronic myelomonocytic leukaemia",
+                        "Myelodysplastic/myeloproliferative neoplasm with neutrophilia (previously atypical chronic myeloid leukaemia)",
+                        "Myelodysplastic/myeloproliferative neoplasm With SF3B1 mutation and thrombocytosis",
+                        "Myelodysplastic/myeloproliferative neoplasm. NOS (unclassifiable)",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "AML with defining genetic abnormalities": [
+                        "Acute promyelocytic leukaemia with PML::RARA fusion",
+                        "Acute promyelocytic leukaemia With a variant RARA translocation",
+                        "AML with RUNX1::RUNX1T1 fusion",
+                        "AML with CBFB::MYH11",
+                        "AML DEK::NUP214",
+                        "AML with RBM15::MRTFA fusion",
+                        "AML BCR:ABL1 fusion",
+                        "AML With KMT2A rearrangement",
+                        "AML with MECOM rearrangement",
+                        "AML with NUP98 rearrangement",
+                        "AML with NPM1 mutation",
+                        "AML with CEBPA mutation",
+                        "AML. With myelodysplasia-related",
+                        "AML with CBFA2T3::GLIS2 fusion",
+                        "AML with KAT6A::CREBBP fusion",
+                        "AML FUS::ERG fusion",
+                        "AML MNX::ETV6 fusion",
+                        "AML NPM1::MLF1 fusion",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Acute myeloid leukaemia defined by differentiation": [
+                        "AML with minimal differentiation",
+                        "AML without maturation",
+                        "AML with maturation",
+                        "Acute basophilic leukaemia",
+                        "Acute myelomonocytic leukaemia",
+                        "Acute monocytic leukaemia",
+                        "Acute erythroid leukaemia",
+                        "Acute megakaryoblastic leukaemia",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Myeloid sarcoma": [
+                        "Myeloid Sarcoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Myeloid neoplasms and proliferations associated with antecedent or predisposing conditions": [
+                        "Myelodysplastic neoplasm post cytotoxic therapy",
+                        "Myelodysplastic/myeloproliferative neoplasm post cytotoxic therapy",
+                        "Acute myeloid leukaemia post cytotoxic therapy",
+                        "Myeloid neoplasms with germline predisposition",
+                        "Myeloid proliferations associated with Down syndrome",
+                        "Myeloid leukaemia associated with Down syndrome",
+                        "Transient abnormal myelopoiesis",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Myeloid/lymphoid neoplasms with eosinophilia and tyrosine kinase gene fusion": [
+                        "Myeloid/lymphoid neoplasm with PDGFRA rearrangement",
+                        "Myeloid/lymphoid neoplasm with PDGFRB rearrangement",
+                        "Myeloid/lymphoid neoplasm with FGFR1 rearrangement",
+                        "Myeloid/lymphoid neoplasm with JAK2 rearrangement",
+                        "Myeloid/lymphoid neoplasm with FLT 3 rearrangement",
+                        "Myeloid/lymphoid neoplasm with ETV6::ABL1 fusion",
+                        "Myeloid/lymphoid neoplasms with other tyrosine kinase fusion genes",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Acute leukaemia of ambiguous lineage with defining genetic abnormalities": [
+                        "Mixed-phenotype acute leukaemia with BC::ABL1 fusion",
+                        "Mixed-phenotype acute leukaemia with KMT2A rearrangement",
+                        "Mixed-phenotype acute leukaemia with ZNF384 rearrangement",
+                        "Acute leukaemia of ambiguous lineage with BCL11B rearrangement",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Acute leukaemia of ambiguous lineage defined immunophenotypically": [
+                        "Mixed-phenotype acute leukaemia, B/myeloid",
+                        "Mixed-phenotype acute leukaemia, T/myeloid",
+                        "Mixed-phenotype acute leukaemia, B/T",
+                        "Mixed-phenotype acute leukaemia, B/T/myeloid",
+                        "Mixed-phenotype acute leukaemia, T/megakaryocytic",
+                        "Acute leukaemias of ambiguous lineage, NOS",
+                        "Acute undifferentiated leukaemia",
+                        "Further diagnosis cannot be made based on the information available"
+                    ]
+                }
+            },
+            lymphoid_b: {
+                name: "Lymphoid B-cell",
+                differentiations: {
+                    "Tumour-like lesions With B-cell predominance": [
+                        "Reactive B-cell rich lymphoid proliferations that can mimic lymphoma",
+                        "lgG4.related disease",
+                        "Unicentric Castleman disease",
+                        "Idiopathic multicentric Castleman disease",
+                        "Kaposi sarcoma-associated herpesvirus / human herpesvirus 8 (KSHV/HHV8)-associated multicentric Castleman disease (KSHV/HHV8-MCD)",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Precursor B-cell lymphoid neoplasms": [
+                        "B-lymphoblastic leukaemia/lymphoma",
+                        "B-lymphoblastic leukaemia/lymphoma with high hyperdiplody",
+                        "B-lymphoblastic leukaemia/lymphoma with near-haploid",
+                        "B-lymphoblastic leukaemia/lymphoma with hypodiploidy, low-hypodiploid",
+                        "B-lymphoblastic leukaemia/lymphoma with hypodiploidy, high-hypodiploid",
+                        "B-lymphoblastic leukaemia/lymphoma with iAMP21",
+                        "B Lymphoblastic leukaemia/lymphoma with BCR::ABL1 fusion",
+                        "B Lymphoblastic leukaemia/lymphoma BCR::ABL1-Iike features",
+                        "B Lymphoblastic leukaemia/lymphoma with KMT2A rearrangement",
+                        "B Lymphoblastic leukaemia/lymphoma with ETV6::RUNX1 fusion",
+                        "B Lymphoblastic leukaemia/lymphoma with ETV6::RUNX1-like features",
+                        "B Lymphoblastic leukaemia/lymphoma with TCF3::PBX1 fusion",
+                        "B Lymphoblastic leukaemia/lymphoma with IGH::IL3 fusion",
+                        "B Lymphoblastic leukaemia/lymphoma with TCF3::HLF fusion",
+                        "B Lymphoblastic leukaemia/lymphoma with other defined genetic alterations- DUX4 rearrangement",
+                        "B Lymphoblastic leukaemia/lymphoma with other defined genetic alterations- MEF2D rearrangement",
+                        "B Lymphoblastic leukaemia/lymphoma with other defined genetic alterations- ZNF384 rearrangement",
+                        "B Lymphoblastic leukaemia/lymphoma with other defined genetic alterations- PAX5alt",
+                        "B Lymphoblastic leukaemia/lymphoma with other defined genetic alterations- PAX5 p.P80R",
+                        "B-lymphoblastic leukaemia/lymphoma with other defined genetic alterations- NUTM1 rearrangement",
+                        "B-lymphoblastic leukaemia/lymphoma with other defined genetic alterations- MYC rearrangement",
+                        "B-lymphoblastic leukaemia/lymphoma NOS",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: preneoplastic and neoplastic small lymphocytic proliferations": [
+                        "Monoclonal B-cell lymphocytosis. CLL/SLL type",
+                        "Monoclonal B-cell lymphocytosis, non-CLL/SLL type",
+                        "Chronic lymphocytic leukaemia / small lymphocytic lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: Splenic B-cell lymphomas and leukaemias": [
+                        "Hairy cell leukaemia",
+                        "Splenic marginal zone lymphoma",
+                        "Splenic diffuse red pulp small B-cell lymphoma",
+                        "Splenic B-cell lymphoma/leukaemia with prominent nucleoli (previously hairy cell variant)",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: Lymphomplasmacytic lymphoma": [
+                        "lgM-type lymphoplasmacytic lymphoma / Waldenstrom macroglobulinaemia",
+                        "Non-lgM-type lymphoplasmacytic lymphoma / Waldenstrom macroglobulinaemia",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: Marginal zone lymphoma": [
+                        "Extranodal marginal zone of MALT- Immunoproliferative small intestinal disease (alpha heavy chain disease)",
+                        "Primary cutaneous marginal zone lymphoma",
+                        "Nodal marginal zone lymphoma",
+                        "Paediatric nodal marginal zone lymphoma",
+                        "Further diagnosis cannot be made based on information available"
+                    ],
+                    "Mature B-cell: Follicular lymphoma": [
+                        "In situ follicular B-cell neoplasm",
+                        "Follicular lymphoma (FL)- Classic",
+                        "Follicular lymphoma (FL) With unusual cytological features",
+                        "Follicular lymphoma (FL) with a predominantly diffuse growth pattern",
+                        "Follicular lymphoma (FL)- Follicular large B-cell lymphoma",
+                        "Paediatric-type follicular lymphoma",
+                        "Duodenal-type follicular lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: Cutaneous follicle centre lymphoma": [
+                        "Primary cutaneous follicle centre lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: Mantle cell lymphoma": [
+                        "In situ mantle cell neoplasm",
+                        "Cyclin D1-positive mantle cell lymphoma",
+                        "Cyclin D1-negative mantle cell lymphoma",
+                        "Leukaemic non-nodal mantle cell lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: Transformations of indolent B-cell lymphomas": [
+                        "Transformations of indolent B-cell lymphomas",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: Large B-cell lymphomas": [
+                        "Diffuse large B-cell lymphoma, NOS- centroblastic subtype",
+                        "Diffuse large B-cell lymphoma, NOS- immunoblastic subtype",
+                        "Diffuse large B-cell lymphoma, NOS- anaplastic subtype",
+                        "Diffuse large B-cell lymphoma, NOS- germinal-centre B-cell subtype",
+                        "Diffuse large B-cell lymphoma, NOS- activated B-cell subtype",
+                        "Diffuse large B-cell lymphoma, NOS- with MYC and BCL6",
+                        "T cell/histiocyte-rich large B-cell lymphoma, de novo",
+                        "T cell/histiocyte-rich large B-cell lymphoma progressed from nodular lymphocyte-predominant Hodgkin lymphoma",
+                        "DLBCL/HGBCL-MYC/BL2 without BCL6 rearrangement",
+                        "DLBCL/HGBCL-MYC/BL2 with BCL6 rearrangement",
+                        "DLBCL/HGBCL-MYC/BL2 (With or without BCL6 rearrangement) with TdT expression",
+                        "ALK-positive large B-cell lymphoma",
+                        "Large B-cell lymphoma with IRF4 rearrangement",
+                        "High-grade B-cell lymphoma with 11q aberration",
+                        "Lymphomatoid granulomatosis, NOS- grade 1",
+                        "Lymphomatoid granulomatosis, NOS- grade 2",
+                        "Lymphomatoid granulomatosis, NOS- grade 3",
+                        "EBV-positive diffuse large B-cell lymphoma",
+                        "Diffuse large B-cell associated with chronic inflammation",
+                        "Diffuse large B-cell lymphoma associated with chronic inflammation",
+                        "Fluid overload-associated B-cell lymphoma",
+                        "Plasmablastic lymphoma",
+                        "Primary large B-cell lymphoma of immune-privileged sites- CNS",
+                        "Primary large B-cell lymphoma of immune-privileged sites- vitreoretina",
+                        "Primary large B-cell lymphoma of immune-privileged sites- testis",
+                        "Primary cutaneous diffuse large B-cell lymphoma, leg-type",
+                        "Classic Intravascular large B-cell lymphoma",
+                        "Cutaneous Intravascular large B-cell lymphoma",
+                        "Haemophagocytic Intravascular large B-cell lymphoma",
+                        "Primary mediastinal Iarge B-cell lymphoma",
+                        "High-grade B-cell lymphoma, NOS",
+                        "High-grade B-cell lymphoma, NOS, with MYC and BCL6 rearrangements",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: Burkitt lymphoma": [
+                        "EBV-associated Burkitt lymphoma",
+                        "EBV-negative Burkitt lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: KSHV/HHV8-associated B-cell lymphoid proliferations and lymphomas": [
+                        "Primary effusion lymphoma",
+                        "Extracavitary primary effusion lymphoma",
+                        "KSHV/HHV8-positive diffuse large B-cell lymphoma",
+                        "KSHV/HHV8-positive germinotropic lymphoproliferative disorder",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature B-cell: Lymphoid proliferations and lymphomas associated with immune deficiency and dysregulation": [
+                        "Hyperplasias arising in immune deficiency/dysregulation",
+                        "Polymorphic lymphoproliferative disorders arising in immune deficiency/dysregulation",
+                        "EBV-positive mucocutaneous ulcer",
+                        "Lymphomas arising in immune deficiency/dysregulation",
+                        "Inborn error of immunity-associated lymphoid proliferations and lymphomas",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Hodgkin lymphoma": [
+                        "Classic Hodgkin lymphoma",
+                        "Classic Hodgkin lymphoma, nodular sclerosis",
+                        "Classic Hodgkin lymphoma, mixed cellularity",
+                        "Classic Hodgkin lymphoma, lymphocyte-rich",
+                        "Classic Hodgkin lymphoma, lymphocyte-depleted",
+                        "Nodular lymphocyte predominant Hodgkin lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Plasma cell neoplasms and Other diseases with paraproteins": [
+                        "Cold agglutinin disease",
+                        "IgM monoclonal gammopathy of undetermined significance",
+                        "IgG monoclonal gammopathy of undetermined significance",
+                        "lgA monoclonal gammopathy of undetermined significance",
+                        "IgD monoclonal gammopathy of undetermined significance",
+                        "IgE monoclonal gammopathy of undetermined significance",
+                        "Light chain monoclonal gammopathy of undetermined significance",
+                        "monoclonal gammopathy of renal significance",
+                        "Systemic AL amyloidosis",
+                        "Localized AL amyloidosis",
+                        "Heavy chain AL amyloidosis",
+                        "Monoclonal immunoglobuin light chain deposition disease",
+                        "Monoclonal immunoglobuin light and heavy chain deposition disease",
+                        "Monoclonal immunoglobuin heavy chain deposition disease",
+                        "Mu heavy chain disease",
+                        "Gamma heavy chain disease",
+                        "Alpha heavy chain disease",
+                        "Solitary plasmacytoma of bone",
+                        "Extramedullary plasmacytoma",
+                        "Plasma cell myeloma",
+                        "Smoulderhg (asymptomatic) plasma cell myeloma",
+                        "Non-secretory plasma cell myeloma",
+                        "Plasma cell leukaemia",
+                        "Plasma cell neoplasms with associated paraneoplastic syndrome",
+                        "Further diagnosis cannot be made based on the information available"
+                    ]
+                }
+            },
+            lymphoid_t: {
+                name: "Lymphoid T-cell",
+                differentiations: {
+                    "Tumour-like lesions with T-cell predominance": [
+                        "Kikuchi-Fujimoto disease",
+                        "Autoimmune lymphoproliferative syndrome (ALPS)",
+                        "Indolent T-lymphoblastic proliferation",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Precursor T-cell neoplasms": [
+                        "T-lymphoblastic leukaemia/lymphoma (T-ALL/LBL), NOS",
+                        "Early T-precursor lymphoblastic leukaemia lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature T-cell and NK-cell neoplasms": [
+                        "T-prolymphocytic leukaemia",
+                        "T-large granular lymphocytic leukaemia",
+                        "NK-large granular lymphocytic leukaemia",
+                        "Adult T-cell leukaemia/lymphoma",
+                        "Smouldering adult T-cell leukaemia/lymphoma",
+                        "Chronic adult T-cell leukaemia/lymphoma",
+                        "Lymphoma adult T-cell leukaemia/lymphoma",
+                        "Acute adult T-cell leukaemia/lymphoma",
+                        "Sezary syndrome",
+                        "Aggressive NK-cell leukaemia",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature T and NK-cell: Primary cutaneous T-cell neoplasms": [
+                        "Primary cutaneous CD4-positive small or medium T-cell lymphoproliferative disorder",
+                        "Primary cutaneous acral CD8-positive T-cell lymphoproliferative disorder",
+                        "Mycosis fungoides",
+                        "Folliculotropic mycosis fungoides",
+                        "Pagetoid reticulosis",
+                        "Granulomatous slack skin disease",
+                        "Primary cutaneous CD30-positive T-cell lymphoproliferative disorder: lymphomatoid papulosis",
+                        "Primary mucosal CD30-positive positive T-cell lymphoproliferative disorder",
+                        "Lymphomatoid papulosis subtypes A. B, C, D, E",
+                        "Primary cutaneous CD30-positive T-cell lymphoproliferative disorder: primary cutaneous anaplastic large cell lymphoma",
+                        "Subcutaneous panniculitis-like T cell-lymphoma",
+                        "Primary cutaneous gamma-delta T-cell lymphoma",
+                        "Primary cutaneous CD8-positive aggressive epidermotropic cytotoxic T-cell lymphoma",
+                        "Primary cutaneous T-cell lymphoma, NOS",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature T and NK-cell: Intestinal lymphoid proliferations": [
+                        "Indolent T-cell lymphoma of the gastrointestinal tract",
+                        "Indolent NK-cell lymphoproliferative disorder of the gastrointestinal tract",
+                        "Enteropathy-associated T-cell lymphoma",
+                        "Monomorphic epitheliotropic intestinal T-cell lymphoma",
+                        "Intestinal T-cell lymphoma, NOS",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature T and NK-cell: Hepatosplenic T-cell lymphoma": [
+                        "Hepatosplenic T-cell lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature T and NK-cell: Anaplastic large cell lymphoma": [
+                        "ALK-positive anaplastic large cell lymphoma",
+                        "ALK-negative anaplastic large cell lymphoma",
+                        "Breast implant-associated anaplastic large cell lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature T-cell: Nodal T follicular helper cell lymphoma": [
+                        "Nodal T follicular helper cell lymphoma, angioimmunoblastic type",
+                        "Nodal T follicular helper cell lymphoma, follicular type",
+                        "Nodal T follicular helper cell lymphoma, NOS",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature T-cell: Other peripheral T-cell lymphomas": [
+                        "Peripheral T-cell lymphoma, NOS",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature T and NK-cell: EBV-positive lymphoma": [
+                        "EBV-positive nodal T- and NK-cell lymphoma",
+                        "Nasal Extranodal NK/T-cell lymphoma",
+                        "Non-nasal Extranodal NK/T-cell lymphoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Mature T and NK-cell: EBV-positive lymphoid proliferations and lymphomas of childhood": [
+                        "Severe mosquito bite allergy",
+                        "Hydroa vacciniforme lymphoproliferative disorder",
+                        "Systemic chronic active EBV-positive disease",
+                        "Systemic EBV-positive T-cell lymphoma of childhood",
+                        "Further diagnosis cannot be made based on the information available"
+                    ]
+                }
+            },
+            histiocytic: {
+                name: "Histiocytic and Dendritic Cell Neoplasms",
+                differentiations: {
+                    "Plasmacytoid dendritic cell neoplasms": [
+                        "Mature plasmacytoid dendritic cell proliferation associated with myeloid neoplasm",
+                        "Blastic plasmacytoid dendritic cell neoplasm",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Langerhans cell and other dendritic cell neoplasms": [
+                        "Langerhans cell histiocytosis",
+                        "Primary Langerhans cell sarcoma",
+                        "Secondary Langerhans cell sarcoma",
+                        "Indeterminate dendritic cell tumour",
+                        "Interdigitating dendritic cell sarcoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Histiocyte/macrophage neoplasms": [
+                        "Juvenile xanthogranuloma",
+                        "Erdheim-Chester disease",
+                        "Rosai-Dorfman disease",
+                        "ALK-positive histiocytosis",
+                        "Histiocytic sarcoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ]
+                }
+            },
+            stroma: {
+                name: "Stroma-derived neoplasms of lymphoid tissues",
+                differentiations: {
+                    "Mesenchymal dendritic cell neoplasms": [
+                        "Follicular dendritic cell sarcoma",
+                        "EBV-positive inflammatory follicular dendritic cell sarcoma",
+                        "Fibroblastic reticular cell tumour",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Myofibroblastic tumours": [
+                        "Intranodal palisaded myofibroblastoma",
+                        "Further diagnosis cannot be made based on the information available"
+                    ],
+                    "Spleen-specific vascular-stromal tumours": [
+                        "Littoral cell angioma",
+                        "Splenic hamartoma",
+                        "Sclerosing angiomatoid nodular transformation of spleen",
+                        "Further diagnosis cannot be made based on the information available"
+                    ]
+                }
+            },
+            genetic: {
+                name: "Genetic tumour syndromes associated with haemato-lymphoid tumours",
+                differentiations: {
+                    "Genetic tumour syndromes associated with haematolymphoid tumours": [
+                        "Fanconi anaemia",
+                        "Bloom syndrome",
+                        "Ataxia-telangiectasia",
+                        "RASopathies",
+                        "Further diagnosis cannot be made based on the information available"
+                    ]
+                }
+            }
+        };
+
+        // Get DOM elements
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const lineageSelect = document.getElementById('lineage');
+        const differentiationSelect = document.getElementById('differentiation');
+        const diagnosisSelect = document.getElementById('diagnosis');
+        const submitBtn = document.querySelector('.submit-btn');
+        const responseDisplay = document.getElementById('responseDisplay');
+        const responseText = document.getElementById('responseText');
+        const mailtoBtn = document.getElementById('mailtoBtn');
+        const serverEmailBtn = document.getElementById('serverEmailBtn');
+        const serverEmailMessage = document.getElementById('serverEmailMessage');
+
+        // Enable/disable submit button based on form completion
+        function checkFormCompletion() {
+            const isComplete = nameInput.value && emailInput.value && 
+                              lineageSelect.value && differentiationSelect.value && 
+                              diagnosisSelect.value;
+            submitBtn.disabled = !isComplete;
+        }
+
+        // Add event listeners to form fields
+        nameInput.addEventListener('input', checkFormCompletion);
+        emailInput.addEventListener('input', checkFormCompletion);
+        
+        // Populate differentiation dropdown based on lineage selection
+        lineageSelect.addEventListener('change', function() {
+            const selectedLineage = this.value;
+            
+            // Reset and disable dependent dropdowns
+            differentiationSelect.innerHTML = '<option value="">- Select a Differentiation -</option>';
+            diagnosisSelect.innerHTML = '<option value="">- Select a Diagnosis -</option>';
+            diagnosisSelect.disabled = true;
+            submitBtn.disabled = true;
+            responseDisplay.style.display = 'none';
+
+            if (selectedLineage) {
+                differentiationSelect.disabled = false;
+                const differentiations = diagnosisData[selectedLineage].differentiations;
+                
+                for (const [diffKey, diffValue] of Object.entries(differentiations)) {
+                    const option = document.createElement('option');
+                    option.value = diffKey;
+                    option.textContent = diffKey;
+                    differentiationSelect.appendChild(option);
+                }
+            } else {
+                differentiationSelect.disabled = true;
+            }
+            
+            checkFormCompletion();
+        });
+
+        // Populate diagnosis dropdown based on differentiation selection
+        differentiationSelect.addEventListener('change', function() {
+            const selectedLineage = lineageSelect.value;
+            const selectedDifferentiation = this.value;
+            
+            // Reset diagnosis dropdown
+            diagnosisSelect.innerHTML = '<option value="">- Select a Diagnosis -</option>';
+            submitBtn.disabled = true;
+            responseDisplay.style.display = 'none';
+
+            if (selectedLineage && selectedDifferentiation) {
+                diagnosisSelect.disabled = false;
+                const diagnoses = diagnosisData[selectedLineage].differentiations[selectedDifferentiation];
+                
+                diagnoses.forEach(diagnosis => {
+                    const option = document.createElement('option');
+                    option.value = diagnosis;
+                    option.textContent = diagnosis;
+                    diagnosisSelect.appendChild(option);
+                });
+            } else {
+                diagnosisSelect.disabled = true;
+            }
+            
+            checkFormCompletion();
+        });
+
+        // Enable submit button when all fields are filled
+        diagnosisSelect.addEventListener('change', checkFormCompletion);
+
+        // Handle form submission
+        document.getElementById('leukemiaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: nameInput.value,
+                email: emailInput.value,
+                lineage: lineageSelect.options[lineageSelect.selectedIndex].text,
+                differentiation: differentiationSelect.options[differentiationSelect.selectedIndex].text,
+                diagnosis: diagnosisSelect.options[diagnosisSelect.selectedIndex].text,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Display the response
+            responseText.innerHTML = `
+                <strong>Name:</strong> ${formData.name}<br>
+                <strong>Email:</strong> ${formData.email}<br>
+                <strong>Lineage:</strong> ${formData.lineage}<br>
+                <strong>Differentiation:</strong> ${formData.differentiation}<br>
+                <strong>Diagnosis:</strong> ${formData.diagnosis}<br>
+                <strong>Timestamp:</strong> ${new Date(formData.timestamp).toLocaleString()}
+            `;
+            responseDisplay.style.display = 'block';
+            
+            // Log to console (in real implementation, send to server)
+            console.log('NEQAS Form Submission:', formData);
+            
+            // Scroll to response
+            responseDisplay.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Email functionality
+        mailtoBtn.addEventListener('click', function() {
+            const name = nameInput.value;
+            const email = emailInput.value;
+            const lineage = lineageSelect.options[lineageSelect.selectedIndex].text;
+            const differentiation = differentiationSelect.options[differentiationSelect.selectedIndex].text;
+            const diagnosis = diagnosisSelect.options[diagnosisSelect.selectedIndex].text;
+            const timestamp = new Date().toISOString();
+            
+            const subject = `NEQAS Leukaemia Diagnosis Submission - ${name}`;
+            const body = `
+NEQAS Leukaemia Investigation - Part 2 Submission
+
+Name: ${name}
+Email: ${email}
+Lineage: ${lineage}
+Differentiation: ${differentiation}
+Diagnosis: ${diagnosis}
+Timestamp: ${new Date(timestamp).toLocaleString()}
+
+This is an automated submission from the NEQAS Leukaemia Investigation form.
+            `.trim();
+            
+            // Create mailto link
+            const mailtoLink = `mailto:neqas-submissions@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            // Open email client
+            window.location.href = mailtoLink;
+        });
+
+        // Server email functionality (placeholder)
+        serverEmailBtn.addEventListener('click', function() {
+            // This would normally send data to a server endpoint
+            serverEmailMessage.style.display = 'block';
+            serverEmailMessage.textContent = "Server email functionality requires backend implementation with a service like PHP, Node.js, or a third-party email service.";
+        });
+    </script>
+</body>
+</html>
