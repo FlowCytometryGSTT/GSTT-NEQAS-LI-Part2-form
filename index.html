@@ -729,7 +729,7 @@
         // Enable submit button when all fields are filled
         diagnosisSelect.addEventListener('change', checkFormCompletion);
 
-        // Handle form submission
+                // Handle form submission
 document.getElementById('leukemiaForm').addEventListener('submit', function(e) {
     // Populate hidden fields before submission
     document.getElementById('formName').value = nameInput.value;
@@ -739,7 +739,7 @@ document.getElementById('leukemiaForm').addEventListener('submit', function(e) {
     document.getElementById('formDiagnosis').value = diagnosisSelect.options[diagnosisSelect.selectedIndex].text;
     document.getElementById('formTimestamp').value = new Date().toISOString();
     
-    // Show success message immediately (form will submit in background)
+    // Show success message
     const formData = {
         name: nameInput.value,
         email: emailInput.value,
@@ -767,27 +767,8 @@ document.getElementById('leukemiaForm').addEventListener('submit', function(e) {
     // Log to console
     console.log('NEQAS Form Submission:', formData);
     
-    // Let the form submit to Formspree (don't prevent default)
-    // The page will redirect to Formspree's confirmation page
+    // Let the form submit to Formspree - don't prevent default
 });
-            
-            // Display the response
-            responseText.innerHTML = `
-                <strong>Name:</strong> ${formData.name}<br>
-                <strong>Email:</strong> ${formData.email}<br>
-                <strong>Lineage:</strong> ${formData.lineage}<br>
-                <strong>Differentiation:</strong> ${formData.differentiation}<br>
-                <strong>Diagnosis:</strong> ${formData.diagnosis}<br>
-                <strong>Timestamp:</strong> ${new Date(formData.timestamp).toLocaleString()}
-            `;
-            responseDisplay.style.display = 'block';
-            
-            // Log to console (in real implementation, send to server)
-            console.log('NEQAS Form Submission:', formData);
-            
-            // Scroll to response
-            responseDisplay.scrollIntoView({ behavior: 'smooth' });
-        });
 
         // Email functionality
         mailtoBtn.addEventListener('click', function() {
