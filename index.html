@@ -731,6 +731,9 @@
 
                 // Handle form submission
 document.getElementById('leukemiaForm').addEventListener('submit', function(e) {
+    // Prevent the default form submission
+    e.preventDefault();
+    
     // Populate hidden fields before submission
     document.getElementById('formName').value = nameInput.value;
     document.getElementById('formEmail').value = emailInput.value;
@@ -767,7 +770,22 @@ document.getElementById('leukemiaForm').addEventListener('submit', function(e) {
     // Log to console
     console.log('NEQAS Form Submission:', formData);
     
-    // Let the form submit to Formspree - don't prevent default
+    // Now submit the form to Formspree programmatically
+    fetch(this.action, {
+        method: 'POST',
+        body: new FormData(this),
+        headers: {
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.ok) {
+            console.log('Formspree submission successful');
+        } else {
+            console.log('Formspree submission failed');
+        }
+    }).catch(error => {
+        console.log('Formspree submission error:', error);
+    });
 });
 
         // Email functionality
