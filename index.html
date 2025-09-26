@@ -106,7 +106,7 @@
 <body>
     <div class="form-container">
         <h1>NEQAS Leukaemia Investigation - Part 2</h1>
-        <form id="leukemiaForm">
+        <form id="leukemiaForm" action="https://formspree.io/f/xdkwkral" method="POST">     <input type="hidden" name="_subject" value="NEQAS LI Part 2 Form Submission">     <input type="hidden" name="_replyto" id="formEmail">
             <div class="form-group">
                 <label for="name">Name: <span class="required">*</span></label>
                 <input type="text" id="name" required placeholder="Enter your full name">
@@ -144,14 +144,31 @@
                 </select>
             </div>
 
-            <button type="submit" class="submit-btn" disabled>Submit Diagnosis</button>
+                <!-- Hidden fields for Formspree -->     <input type="hidden" name="name" id="formName">     <input type="hidden" name="email" id="formEmail">     <input type="hidden" name="lineage" id="formLineage">     <input type="hidden" name="differentiation" id="formDifferentiation">     <input type="hidden" name="diagnosis" id="formDiagnosis">     <input type="hidden" name="timestamp" id="formTimestamp">      <button type="submit" class="submit-btn" disabled>Submit Diagnosis</button>
         </form>
-        
-        <div id="responseDisplay" class="response-display" style="display: none;">
-            <h3>Submitted Diagnosis:</h3>
-            <p id="responseText"></p>
+
+    <!-- Formspree Success Handler -->
+    <script>
+        // Check if user returned from successful Formspree submission
+        if (window.location.search.includes('success=true')) {
+            // Show success message in the response display
+            document.getElementById('responseText').innerHTML = `
+                <strong style="color: #27ae60;">✓ Form submitted successfully!</strong><br>
+                Thank you for your NEQAS Leukemia Investigation submission.<br>
+                You should receive a confirmation email shortly.
+            `;
+            document.getElementById('responseDisplay').style.display = 'block';
             
-            <div class="email-options">
+            // Hide the email options since we're using Formspree now
+            document.querySelector('.email-options').style.display = 'none';
+        }
+    </script>
+    
+    <div id="responseDisplay" class="response-display" style="display: none;">
+        <h3>Submitted Diagnosis:</h3>
+        <p id="responseText"></p>
+        
+        <div class="email-options">
                 <h4>Email Options:</h4>
                 <p>Choose how you'd like to send this submission:</p>
                 <button id="mailtoBtn" class="email-btn">Send via Email Client</button>
@@ -713,17 +730,46 @@
         diagnosisSelect.addEventListener('change', checkFormCompletion);
 
         // Handle form submission
-        document.getElementById('leukemiaForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                name: nameInput.value,
-                email: emailInput.value,
-                lineage: lineageSelect.options[lineageSelect.selectedIndex].text,
-                differentiation: differentiationSelect.options[differentiationSelect.selectedIndex].text,
-                diagnosis: diagnosisSelect.options[diagnosisSelect.selectedIndex].text,
-                timestamp: new Date().toISOString()
-            };
+document.getElementById('leukemiaForm').addEventListener('submit', function(e) {
+    // Populate hidden fields before submission
+    document.getElementById('formName').value = nameInput.value;
+    document.getElementById('formEmail').value = emailInput.value;
+    document.getElementById('formLineage').value = lineageSelect.options[lineageSelect.selectedIndex].text;
+    document.getElementById('formDifferentiation').value = differentiationSelect.options[differentiationSelect.selectedIndex].text;
+    document.getElementById('formDiagnosis').value = diagnosisSelect.options[diagnosisSelect.selectedIndex].text;
+    document.getElementById('formTimestamp').value = new Date().toISOString();
+    
+    // Show success message immediately (form will submit in background)
+    const formData = {
+        name: nameInput.value,
+        email: emailInput.value,
+        lineage: lineageSelect.options[lineageSelect.selectedIndex].text,
+        differentiation: differentiationSelect.options[differentiationSelect.selectedIndex].text,
+        diagnosis: diagnosisSelect.options[diagnosisSelect.selectedIndex].text,
+        timestamp: new Date().toISOString()
+    };
+    
+    // Display the response
+    responseText.innerHTML = `
+        <strong>Name:</strong> ${formData.name}<br>
+        <strong>Email:</strong> ${formData.email}<br>
+        <strong>Lineage:</strong> ${formData.lineage}<br>
+        <strong>Differentiation:</strong> ${formData.differentiation}<br>
+        <strong>Diagnosis:</strong> ${formData.diagnosis}<br>
+        <strong>Timestamp:</strong> ${new Date(formData.timestamp).toLocaleString()}<br><br>
+        <strong style="color: #27ae60;">✓ Form submitted successfully! You will receive a confirmation email shortly.</strong>
+    `;
+    responseDisplay.style.display = 'block';
+    
+    // Scroll to response
+    responseDisplay.scrollIntoView({ behavior: 'smooth' });
+    
+    // Log to console
+    console.log('NEQAS Form Submission:', formData);
+    
+    // Let the form submit to Formspree (don't prevent default)
+    // The page will redirect to Formspree's confirmation page
+});
             
             // Display the response
             responseText.innerHTML = `
